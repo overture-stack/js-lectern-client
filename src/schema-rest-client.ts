@@ -60,7 +60,7 @@ export const restClient: SchemaServiceRestClient = {
       return schemaDictionary[0] as SchemasDictionary;
     } catch (err) {
       L.error(`failed to fetch schema using this url: ${url}`, err);
-      throw new Error('failed to get the schema');
+      throw new Error(err.message);
     }
   },
   fetchDiff: async (
@@ -94,16 +94,18 @@ export const restClient: SchemaServiceRestClient = {
 };
 
 const doRequest = async (url: string) => {
+  let response: any;
   try {
     const retryAttempt = 1;
-    const response = await promiseTools.retry({ times: 5, interval: 1000 }, async () => {
+    response = await promiseTools.retry({ times: 5, interval: 1000 }, async () => {
       L.debug(`fetching schema attempt #${retryAttempt}`);
       return promiseTools.timeout(fetch(url), 5000);
     });
     return await response.json();
   } catch (err) {
     L.error(`failed to fetch schema using this url: ${url}`, err);
-    throw new Error('failed to get the schema');
+    const error = response.status == 404 ? new Error('Schema Not Found') : new Error('failed to get the schema');
+    throw error;
   }
 };
 
