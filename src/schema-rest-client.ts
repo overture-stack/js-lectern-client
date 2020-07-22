@@ -104,7 +104,7 @@ const doRequest = async (url: string) => {
     return await response.json();
   } catch (err) {
     L.error(`failed to fetch schema using this url: ${url}`, err);
-    const error = response.status == 404 ? new Error('Schema Not Found') : new Error('failed to get the schema');
+    const error = response.status == 404 ? new Error('Not Found') : new Error('Request Failed');
     throw error;
   }
 };
