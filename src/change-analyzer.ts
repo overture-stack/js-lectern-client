@@ -26,6 +26,7 @@ import {
   ChangeAnalysis,
   ChangeTypeName,
   RestrictionChanges,
+  FieldDefinition,
 } from './schema-entities';
 
 const isFieldChange = (obj: any): obj is Change => {
@@ -109,7 +110,7 @@ export const analyzeChanges = (schemasDiff: SchemasDictionaryDiffs): ChangeAnaly
         }
 
         if (fieldDiff.restrictions) {
-          categorizeRestrictionChanges(analysis, field, fieldDiff.restrictions);
+          categorizeRestrictionChanges(analysis, field, fieldDiff.restrictions, fieldChange.after);
         }
 
         if (fieldDiff.isArray) {
@@ -166,6 +167,7 @@ const categorizeRestrictionChanges = (
   analysis: ChangeAnalysis,
   field: string,
   restrictionsChange: { [field: string]: FieldChanges } | Change,
+  fieldDefinitionAfter?: FieldDefinition
 ) => {
   const restrictionsToCheck = ['regex', 'script', 'required', 'codeList', 'range'];
 
@@ -213,6 +215,32 @@ const categorizeRestrictionChanges = (
         }
       }
       */
+      if (k == 'range' && !change.type) {
+        // if the change is nested (type is at min max level) then the boundries were updated only : ex:
+        /*
+         change = {
+           "max" : {
+             type: "updated"
+             data: "..."
+           },
+           "exclusiveMin": {
+             type: "deleted"
+             data ..
+           }
+         }
+        */
+        const def: any = {};
+        if (Object.keys(change)
+          .some(k => k == 'max' || k == 'min' || k == 'exclusiveMin' || k == 'exclusiveMax')) {
+            analysis.restrictionsChanges[k]['updated'].push({
+              field: field,
+              // we push the whole range definition since it doesnt make sense to just
+              // push one boundary.
+              definition: fieldDefinitionAfter?.restrictions?.range
+            });
+        }
+        return;
+      }
       const definition = change.data || change;
       analysis.restrictionsChanges[k as keyof RestrictionChanges][
         change.type as ChangeTypeName

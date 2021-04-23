@@ -108,7 +108,14 @@ const expectedResult: ChangeAnalysis = {
       deleted: [],
     },
     range: {
-      updated: [],
+      updated: [
+        {
+          definition: {
+            max: 1,
+          },
+          field: 'specimen.percent_stromal_cells'
+        }
+      ],
       created: [
         {
           field: 'donor.survival_time',

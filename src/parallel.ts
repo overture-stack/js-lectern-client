@@ -45,5 +45,5 @@ export const processRecord = async (
     schemaName,
     record,
     index,
-  });
+  }) as Promise<SchemaProcessingResult>;
 };

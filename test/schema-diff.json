@@ -37,7 +37,12 @@
         "description": "Donors last known state of living or deceased.",
         "name": "vital_status",
         "restrictions": {
-          "codeList": ["Alive", "Deceased", "Not reported", "Unknown"],
+          "codeList": [
+            "Alive",
+            "Deceased",
+            "Not reported",
+            "Unknown"
+          ],
           "required": true
         },
         "valueType": "string"
@@ -55,7 +60,12 @@
         "restrictions": {
           "codeList": {
             "type": "deleted",
-            "data": ["Alive", "Deceased", "Not reported", "Unknown"]
+            "data": [
+              "Alive",
+              "Deceased",
+              "Not reported",
+              "Unknown"
+            ]
           },
           "regex": {
             "type": "created",
@@ -72,7 +82,12 @@
         "description": "Description of the cause of a donor's death.",
         "name": "cause_of_death",
         "restrictions": {
-          "codeList": ["Died of cancer", "Died of other reasons", "Not reported", "Unknown"]
+          "codeList": [
+            "Died of cancer",
+            "Died of other reasons",
+            "Not reported",
+            "Unknown"
+          ]
         },
         "valueType": "string"
       },
@@ -80,7 +95,11 @@
         "description": "Description of the cause of a donor's death.",
         "name": "cause_of_death",
         "restrictions": {
-          "codeList": ["Died of other reasons", "Not reported", "N/A"]
+          "codeList": [
+            "Died of other reasons",
+            "Not reported",
+            "N/A"
+          ]
         },
         "valueType": "string"
       },
@@ -89,8 +108,13 @@
           "codeList": {
             "type": "updated",
             "data": {
-              "added": ["N/A"],
-              "deleted": ["Died of cancer", "Unknown"]
+              "added": [
+                "N/A"
+              ],
+              "deleted": [
+                "Died of cancer",
+                "Unknown"
+              ]
             }
           }
         }
@@ -176,7 +200,12 @@
         "description": "Indicate the menopause status of the patient at the time of primary diagnosis.",
         "valueType": "string",
         "restrictions": {
-          "codeList": ["Perimenopausal", "Postmenopausal", "Premenopausal", "Unknown"]
+          "codeList": [
+            "Perimenopausal",
+            "Postmenopausal",
+            "Premenopausal",
+            "Unknown"
+          ]
         }
       },
       "diff": {
@@ -186,7 +215,12 @@
           "description": "Indicate the menopause status of the patient at the time of primary diagnosis.",
           "valueType": "string",
           "restrictions": {
-            "codeList": ["Perimenopausal", "Postmenopausal", "Premenopausal", "Unknown"]
+            "codeList": [
+              "Perimenopausal",
+              "Postmenopausal",
+              "Premenopausal",
+              "Unknown"
+            ]
           }
         }
       }
@@ -200,7 +234,14 @@
         "description": "Indicate presenting symptoms at time of primary diagnosis.",
         "valueType": "string",
         "restrictions": {
-          "codeList": ["Abdominal Pain", "Anemia", "Diabetes", "Diarrhea", "Nausea", "None"]
+          "codeList": [
+            "Abdominal Pain",
+            "Anemia",
+            "Diabetes",
+            "Diarrhea",
+            "Nausea",
+            "None"
+          ]
         }
       },
       "right": {
@@ -209,7 +250,14 @@
         "valueType": "string",
         "isArray": true,
         "restrictions": {
-          "codeList": ["Abdominal Pain", "Anemia", "Diabetes", "Diarrhea", "Nausea", "None"]
+          "codeList": [
+            "Abdominal Pain",
+            "Anemia",
+            "Diabetes",
+            "Diarrhea",
+            "Nausea",
+            "None"
+          ]
         }
       },
       "diff": {
@@ -221,42 +269,92 @@
     }
   ],
   [
-   "sample_registration.program_id",
-   {
-     "left": {
-       "name": "program_id",
-       "valueType": "string",
-       "description": "Unique identifier of the ARGO program.",
-       "meta": {
-         "validationDependency": true,
-         "primaryId": true,
-         "examples": "PACA-AU,BR-CA",
-         "displayName": "Program ID"
-       },
-       "restrictions": {
-         "required": true
-       }
-     },
-     "right": {
-       "name": "program_id",
-       "valueType": "integer",
-       "description": "Unique identifier of the ARGO program.",
-       "meta": {
-         "validationDependency": true,
-         "primaryId": true,
-         "examples": "PACA-AU,BR-CA",
-         "displayName": "Program ID"
-       },
-       "restrictions": {
-         "required": true
-       }
-     },
-     "diff": {
-       "valueType": {
-         "type": "updated",
-         "data": "integer"
-       }
-     }
-   }
- ]
+    "sample_registration.program_id",
+    {
+      "left": {
+        "name": "program_id",
+        "valueType": "string",
+        "description": "Unique identifier of the ARGO program.",
+        "meta": {
+          "validationDependency": true,
+          "primaryId": true,
+          "examples": "PACA-AU,BR-CA",
+          "displayName": "Program ID"
+        },
+        "restrictions": {
+          "required": true
+        }
+      },
+      "right": {
+        "name": "program_id",
+        "valueType": "integer",
+        "description": "Unique identifier of the ARGO program.",
+        "meta": {
+          "validationDependency": true,
+          "primaryId": true,
+          "examples": "PACA-AU,BR-CA",
+          "displayName": "Program ID"
+        },
+        "restrictions": {
+          "required": true
+        }
+      },
+      "diff": {
+        "valueType": {
+          "type": "updated",
+          "data": "integer"
+        }
+      }
+    }
+  ],
+  [
+    "specimen.percent_stromal_cells",
+    {
+      "left": {
+        "name": "percent_stromal_cells",
+        "description": "Indicate a value, in decimals, that represents the percentage of reactive cells that are present in a malignant tumour specimen but are not malignant such as fibroblasts, vascular structures, etc.",
+        "valueType": "number",
+        "meta": {
+          "dependsOn": "sample_registration.tumour_normal_designation",
+          "notes": "",
+          "displayName": "Percent Stromal Cells"
+        },
+        "restrictions": {
+          "range": {
+            "min": 0,
+            "max": 0.1
+          }
+        }
+      },
+      "right": {
+        "name": "percent_stromal_cells",
+        "description": "Indicate a value, in decimals, that represents the percentage of reactive cells that are present in a malignant tumour specimen but are not malignant such as fibroblasts, vascular structures, etc.",
+        "valueType": "number",
+        "meta": {
+          "dependsOn": "sample_registration.tumour_normal_designation",
+          "notes": "",
+          "displayName": "Percent Stromal Cells"
+        },
+        "restrictions": {
+          "range": {
+            "max": 1
+          }
+        }
+      },
+      "diff": {
+        "restrictions": {
+          "range": {
+            "min": {
+              "type": "deleted",
+              "data": 0
+            },
+            "max": {
+              "type": "updated",
+              "data": 1
+            }
+          }
+        }
+      }
+    }
+  ]
 ]
