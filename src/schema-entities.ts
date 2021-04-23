@@ -17,9 +17,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import { loggerFor } from './logger';
 import { DeepReadonly } from 'deep-freeze';
-const L = loggerFor(__filename);
 
 export class DataRecord {
   readonly [k: string]: string | string[];
@@ -143,8 +141,15 @@ export interface ChangeAnalysis {
   isArrayDesignationChanges: string[];
   restrictionsChanges: RestrictionChanges;
   metaChanges?: MetaChanges;
-  valueTypeChanges: string[];
+  valueTypeChanges: ValueTypeChanges[];
 }
+
+export type ValueTypeChanges = {
+  field: string;
+  before?: ValueType;
+  after?: ValueType;
+  valueTypeChange: Change;
+};
 
 export type RestrictionChanges = {
   range: {

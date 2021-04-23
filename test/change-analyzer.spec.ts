@@ -23,6 +23,8 @@ import {
   SchemasDictionaryDiffs,
   FieldDiff,
   ChangeAnalysis,
+  ValueType,
+  ChangeTypeName,
 } from '../src/schema-entities';
 import _ from 'lodash';
 chai.should();
@@ -120,7 +122,13 @@ const expectedResult: ChangeAnalysis = {
     },
   },
   isArrayDesignationChanges: ['primary_diagnosis.presenting_symptoms'],
-  valueTypeChanges: ["sample_registration.program_id"]
+  valueTypeChanges:
+  [ { field: 'sample_registration.program_id',
+      before: ValueType.STRING,
+      after: ValueType.INTEGER,
+      valueTypeChange : {"type": ChangeTypeName.UPDATED, "data":"integer"}
+    }
+  ]
 };
 
 describe('change-analyzer', () => {

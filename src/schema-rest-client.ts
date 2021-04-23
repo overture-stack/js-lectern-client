@@ -22,7 +22,6 @@ import fetch from 'node-fetch';
 import {
   SchemasDictionary,
   SchemasDictionaryDiffs,
-  FieldChanges,
   FieldDiff,
 } from './schema-entities';
 import promiseTools from 'promise-tools';

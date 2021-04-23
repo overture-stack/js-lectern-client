@@ -117,7 +117,10 @@ export const analyzeChanges = (schemasDiff: SchemasDictionaryDiffs): ChangeAnaly
         }
 
         if (fieldDiff.valueType) {
-          categorizerValueTypeChange(analysis, field, fieldDiff.valueType);
+          // when valueTYpe is present in the fieldDiff, fieldDiff is of type Change.
+          const diffAsChange = fieldDiff.valueType as Change;
+          const change: Change = { type: diffAsChange.type, data: diffAsChange.data };
+          categorizerValueTypeChange(analysis, field, fieldChange, change);
         }
       }
     }
@@ -140,9 +143,23 @@ const categorizeFieldArrayDesignationChange = (
 const categorizerValueTypeChange = (
   analysis: ChangeAnalysis,
   field: string,
-  changes: { [field: string]: FieldChanges } | Change,
+  fieldDiff: FieldDiff,
+  changes: Change,
 ) => {
-  analysis.valueTypeChanges.push(field);
+  console.log(JSON.stringify(changes));
+  const valueTypeBefore = fieldDiff.before?.valueType;
+  const valueTypeAfter = fieldDiff.after?.valueType;
+
+  const change = {
+    field: field,
+    before: valueTypeBefore,
+    after: valueTypeAfter,
+    valueTypeChange: changes
+  };
+
+  analysis.valueTypeChanges.push(change);
+
+  console.log(JSON.stringify(analysis.valueTypeChanges));
 };
 
 const categorizeRestrictionChanges = (
