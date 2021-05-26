@@ -409,7 +409,7 @@ namespace validation {
 
         const invalidValues = recordFieldValues.filter(v => isOutOfRange(range, v));
         if (invalidValues.length !== 0) {
-          const info = { range: rangeToSymbol(range) };
+          const info = { ...range };
           return buildError(SchemaValidationErrorTypes.INVALID_BY_RANGE, field.name, index, info);
         }
         return undefined;
@@ -556,31 +556,6 @@ namespace validation {
 
     const recordFieldValues = convertToArray(record[field.name]);
     return recordFieldValues.every(isEmptyString);
-  };
-
-  const rangeToSymbol = (range: RangeRestriction): string => {
-    let minString = '';
-    let maxString = '';
-
-    const hasBothRange = (range.min !== undefined || range.exclusiveMin !== undefined) && (range.max != undefined || range.exclusiveMax !== undefined);
-
-    if (range.min !== undefined) {
-      minString = (`>= ${range.min}`);
-    }
-
-    if (range.exclusiveMin !== undefined ) {
-      minString = `> ${range.exclusiveMin}`;
-    }
-
-    if (range.max !== undefined ) {
-      maxString = `<= ${range.max}`;
-    }
-
-    if (range.exclusiveMax !== undefined ) {
-      maxString = `< ${range.exclusiveMax}`;
-    }
-
-    return hasBothRange ? `${minString} and ${maxString}` : `${minString}${maxString}`;
   };
 
   const isOutOfRange = (range: RangeRestriction, value: number | undefined) => {

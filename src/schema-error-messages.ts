@@ -17,11 +17,13 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import { RangeRestriction } from './schema-entities';
+
 const INVALID_VALUE_ERROR_MESSAGE = 'The value is not permissible for this field.';
 const ERROR_MESSAGES: { [key: string]: (errorData: any) => string } = {
   INVALID_FIELD_VALUE_TYPE: () => INVALID_VALUE_ERROR_MESSAGE,
   INVALID_BY_REGEX: errData => getRegexErrorMsg(errData.info),
-  INVALID_BY_RANGE: errorData => `Value is out of permissible range, value must be ${errorData.info.range}.`,
+  INVALID_BY_RANGE: errorData => `Value is out of permissible range, value must be ${rangeToSymbol(errorData.info)}.`,
   INVALID_BY_SCRIPT: error => error.info.message,
   INVALID_ENUM_VALUE: () => INVALID_VALUE_ERROR_MESSAGE,
   MISSING_REQUIRED_FIELD: errorData => `${errorData.fieldName} is a required field.`,
@@ -33,6 +35,31 @@ const schemaErrorMessage = (errorType: string, errorData: any = {}): string => {
   return errorType && Object.keys(ERROR_MESSAGES).includes(errorType)
     ? ERROR_MESSAGES[errorType](errorData)
     : errorType;
+};
+
+const rangeToSymbol = (range: RangeRestriction): string => {
+  let minString = '';
+  let maxString = '';
+
+  const hasBothRange = (range.min !== undefined || range.exclusiveMin !== undefined) && (range.max != undefined || range.exclusiveMax !== undefined);
+
+  if (range.min !== undefined) {
+    minString = (`>= ${range.min}`);
+  }
+
+  if (range.exclusiveMin !== undefined ) {
+    minString = `> ${range.exclusiveMin}`;
+  }
+
+  if (range.max !== undefined ) {
+    maxString = `<= ${range.max}`;
+  }
+
+  if (range.exclusiveMax !== undefined ) {
+    maxString = `< ${range.exclusiveMax}`;
+  }
+
+  return hasBothRange ? `${minString} and ${maxString}` : `${minString}${maxString}`;
 };
 
 function getRegexErrorMsg(info: any) {

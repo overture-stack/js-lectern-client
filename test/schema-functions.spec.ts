@@ -194,15 +194,27 @@ describe('schema-functions', () => {
       errorType: SchemaValidationErrorTypes.INVALID_BY_RANGE,
       fieldName: 'unit_number',
       index: 0,
-      info: { range: '>= 0 and < 999' },
-      message: schemaErrorMessage(SchemaValidationErrorTypes.INVALID_BY_RANGE, { info: {range: '>= 0 and < 999'} }),
+      info: {
+        exclusiveMax: 999,
+        min: 0
+      },
+      message: schemaErrorMessage(SchemaValidationErrorTypes.INVALID_BY_RANGE, { info: {
+        exclusiveMax: 999,
+        min: 0
+      }}),
     });
     chai.expect(result.validationErrors).to.deep.include({
       errorType: SchemaValidationErrorTypes.INVALID_BY_RANGE,
       fieldName: 'unit_number',
       index: 2,
-      info: { range: '>= 0 and < 999' },
-      message: schemaErrorMessage(SchemaValidationErrorTypes.INVALID_BY_RANGE, { info: {range: '>= 0 and < 999'} }),
+      info: {
+        exclusiveMax: 999,
+        min: 0
+      },
+      message: schemaErrorMessage(SchemaValidationErrorTypes.INVALID_BY_RANGE, { info: {
+        exclusiveMax: 999,
+        min: 0
+      }}),
     });
   });
 
@@ -357,14 +369,14 @@ describe('schema-functions', () => {
       message: 'Value is out of permissible range, value must be > 0 and <= 1.',
       index: 0,
       fieldName: 'fraction',
-      info: { range: '> 0 and <= 1'},
+      info: { max: 1, exclusiveMin: 0 },
     });
     chai.expect(result.validationErrors).to.deep.include({
       errorType: SchemaValidationErrorTypes.INVALID_BY_RANGE,
       message: 'Value is out of permissible range, value must be >= -10 and <= 10.',
       index: 0,
       fieldName: 'integers',
-      info: { range: '>= -10 and <= 10'},
+      info: { max: 10, min: -10 },
     });
   });
 
