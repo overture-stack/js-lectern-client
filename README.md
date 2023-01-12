@@ -6,10 +6,10 @@
 
 This JavaScript client simplifies integration with the [Lectern](https://github.com/overture-stack/lectern) dictionary management web service. It offers various validation options and also includes functionality for data transformation, error reporting, dictionary fetching, comparison and versioning. Overall, it provides an efficient way to manage dictionaries with the Lectern service.
 
+</br>
+
 <div>
 <img align="left" src="ov-logo.png" height="90" hspace="0"/>
-
-
 *Lectern is part of the [Overture](https://www.overture.bio/) research software ecosystem. Overtures  mission is to develop and distribute cutting-edge software that enables researchers to make meaningful discoveries.*
 </div>
 
