@@ -10,8 +10,10 @@ This JavaScript client simplifies integration with the [Lectern](https://github.
 
 <div>
 <img align="left" src="ov-logo.png" height="90" hspace="0"/>
-*Lectern is part of the [Overture](https://www.overture.bio/) research software ecosystem. Overtures  mission is to develop and distribute cutting-edge software that enables researchers to make meaningful discoveries.*
 </div>
+
+*Lectern is part of the [Overture](https://www.overture.bio/) research software ecosystem. Overtures  mission is to develop and distribute cutting-edge software that enables researchers to make meaningful discoveries.*
+
 
 </br>
 
