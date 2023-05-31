@@ -164,6 +164,7 @@ describe('schema-functions', () => {
       info: {
         examples: 'PACA-CA, BASHAR-LA',
         regex: '^[A-Z1-9][-_A-Z1-9]{2,7}(-[A-Z][A-Z])$',
+        value: ['PEME-CAA']
       },
       message:
         'The value is not a permissible for this field, it must meet the regular expression: "^[A-Z1-9][-_A-Z1-9]{2,7}(-[A-Z][A-Z])$". Examples: PACA-CA, BASHAR-LA',
@@ -405,6 +406,23 @@ describe('schema-functions', () => {
     });
   });
 
+  it('should validate string with field defined codelist', () => {
+    const result = schemaService.processRecords(schema, 'favorite_things', [
+      {
+        id: 'TH-ING',
+        fruit_single_value: 'Banana',
+      },
+    ]);
+    chai.expect(result.validationErrors.length).to.eq(1);
+    chai.expect(result.validationErrors).to.deep.include({
+      errorType: SchemaValidationErrorTypes.INVALID_ENUM_VALUE,
+      message: 'The value is not permissible for this field.',
+      fieldName: 'fruit_single_value',
+      index: 0,
+      info: { value: ['Banana'] },
+    });
+  });
+
   it('should validate string array with field defined regex', () => {
     const result = schemaService.processRecords(schema, 'favorite_things', [
       {
@@ -418,6 +436,24 @@ describe('schema-functions', () => {
       message:
         'The value is not a permissible for this field, it must meet the regular expression: "^q.*$".',
       fieldName: 'qWords',
+      index: 0,
+      info: { value: ['not_q'], regex: '^q.*$', examples: undefined },
+    });
+  });
+
+  it('should validate string with field defined regex', () => {
+    const result = schemaService.processRecords(schema, 'favorite_things', [
+      {
+        id: 'TH-ING',
+        qWord: 'not_q',
+      },
+    ]);
+    chai.expect(result.validationErrors.length).to.eq(1);
+    chai.expect(result.validationErrors[0]).to.deep.eq({
+      errorType: SchemaValidationErrorTypes.INVALID_BY_REGEX,
+      message:
+        'The value is not a permissible for this field, it must meet the regular expression: "^q.*$".',
+      fieldName: 'qWord',
       index: 0,
       info: { value: ['not_q'], regex: '^q.*$', examples: undefined },
     });

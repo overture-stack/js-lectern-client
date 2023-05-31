@@ -384,9 +384,7 @@ namespace validation {
         const invalidValues = recordFieldValues.filter(v => isInvalidRegexValue(regex, v));
         if (invalidValues.length !== 0) {
           const examples = field.meta?.examples;
-          const info = field.isArray
-            ? { value: invalidValues, regex, examples }
-            : { regex, examples };
+          const info = { value: invalidValues, regex, examples };
           return buildError(SchemaValidationErrorTypes.INVALID_BY_REGEX, field.name, index, info);
         }
         return undefined;
@@ -452,7 +450,7 @@ namespace validation {
         const invalidValues = recordFieldValues.filter(val => isInvalidEnumValue(codeList, val));
 
         if (invalidValues.length !== 0) {
-          const info = field.isArray ? { value: invalidValues } : undefined;
+          const info = { value: invalidValues };
           return buildError(SchemaValidationErrorTypes.INVALID_ENUM_VALUE, field.name, index, info);
         }
         return undefined;
