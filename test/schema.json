@@ -278,6 +278,16 @@
             "isArray": true
           },
           {
+            "name": "qWord",
+            "valueType": "string",
+            "description": "Word starting with q",
+            "restrictions": {
+              "required": false,
+              "regex": "^q.*$"
+            },
+            "isArray": false
+          },
+          {
             "name": "fruit",
             "valueType": "string",
             "description": "fruit",
@@ -286,6 +296,16 @@
               "codeList": ["Mango", "Orange", "None"]
             },
             "isArray": true
+          },
+          {
+            "name": "fruit_single_value",
+            "valueType": "string",
+            "description": "fruit",
+            "restrictions": {
+              "required": false,
+              "codeList": ["Mango", "Orange", "None"]
+            },
+            "isArray": false
           },
           {
             "name": "animal",
