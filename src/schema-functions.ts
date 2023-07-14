@@ -101,7 +101,9 @@ export const processRecords = (
     validationErrors = validationErrors.concat(result.validationErrors);
     processedRecords.push(_.cloneDeep(result.processedRecord) as TypedDataRecord);
   });
-
+  // Record set level validations
+  const newErrors = validateRecordsSet(schemaDef, processedRecords);
+  validationErrors.push(...newErrors);
   L.debug(
     `done processing all rows, validationErrors: ${validationErrors.length}, validRecords: ${processedRecords.length}`,
   );
@@ -347,6 +349,13 @@ namespace validation {
     fields: Array<FieldDefinition>,
   ) => Array<SchemaValidationError>;
 
+  // these validation functions run AFTER the records has been converted to the correct types from raw strings, and apply to a dataset instead of
+  // individual records
+  export type TypedDatasetValidationFunction = (
+    dataset: Array<TypedDataRecord>,
+    fields: Array<FieldDefinition>,
+  ) => Array<SchemaValidationError>;
+
   export const runValidationPipeline = (
     rec: DataRecord | TypedDataRecord,
     index: number,
@@ -364,6 +373,21 @@ namespace validation {
           typedFunc(rec as TypedDataRecord, index, getValidFields(result, fields)),
         );
       }
+    }
+    return result;
+  };
+
+  export const runDatasetValidationPipeline = (
+    dataset: Array<TypedDataRecord>,
+    fields: ReadonlyArray<FieldDefinition>,
+    funs: Array<TypedDatasetValidationFunction>,
+  ) => {
+    let result: Array<SchemaValidationError> = [];
+    for (const fun of funs) {
+      const typedFunc = fun as TypedDatasetValidationFunction;
+      result = result.concat(
+        typedFunc(dataset, getValidFields(result, fields)),
+      );
     }
     return result;
   };
@@ -456,6 +480,28 @@ namespace validation {
         return undefined;
       })
       .filter(notEmpty);
+  };
+
+  export const validateUnique: TypedDatasetValidationFunction = (
+    dataset: Array<TypedDataRecord>, fields: Array<FieldDefinition>
+  ) => {
+    const errors: Array<SchemaValidationError> = [];
+    fields
+      .forEach(field => {
+        const unique = field.restrictions?.unique || undefined;
+        if (!unique) return undefined;
+        const countsPerValue = new Map<string, number>();
+        const values = dataset.map(x => convertToArray(x[field.name]).join('-'));
+        values.forEach(x => countsPerValue.set(x, (countsPerValue.get(x) || 0) + 1));
+        values.forEach((x, i) => {
+          if ((countsPerValue.get(x) || 0) > 1) {
+            const reportValue = dataset[i][field.name];
+            const info = { value: convertToArray(reportValue) };
+            errors.push(buildError(SchemaValidationErrorTypes.INVALID_BY_UNIQUE, field.name, i, info));
+          }
+        });
+      });
+    return errors;
   };
 
   export const validateValueTypes: ValidationFunction = (
@@ -659,3 +705,12 @@ namespace validation {
     return { ...errorData, message: schemaErrorMessage(errorType, errorData) };
   };
 }
+function validateRecordsSet(schemaDef: SchemaDefinition, processedRecords: TypedDataRecord[]) {
+  const validationErrors = validation
+    .runDatasetValidationPipeline(processedRecords, schemaDef.fields, [
+      validation.validateUnique
+    ])
+    .filter(notEmpty);
+  return validationErrors;
+}
+

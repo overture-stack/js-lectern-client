@@ -27,6 +27,7 @@ const ERROR_MESSAGES: { [key: string]: (errorData: any) => string } = {
   INVALID_BY_SCRIPT: error => error.info.message,
   INVALID_ENUM_VALUE: () => INVALID_VALUE_ERROR_MESSAGE,
   MISSING_REQUIRED_FIELD: errorData => `${errorData.fieldName} is a required field.`,
+  INVALID_BY_UNIQUE: errorData => `Value for ${errorData.fieldName} must be unique.`
 };
 
 // Returns the formatted message for the given error key, taking any required properties from the info object

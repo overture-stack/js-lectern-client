@@ -330,6 +330,13 @@
             "description": "integers between -10 and 10",
             "restrictions": { "required": false, "range": { "max": 10, "min": -10 } },
             "isArray": true
+          },
+          {
+            "name": "unique_value",
+            "valueType": "string",
+            "description": "unique value",
+            "restrictions": { "required": false, "unique": true },
+            "isArray": true
           }
         ]
       }

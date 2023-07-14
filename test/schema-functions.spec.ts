@@ -458,7 +458,90 @@ describe('schema-functions', () => {
       info: { value: ['not_q'], regex: '^q.*$', examples: undefined },
     });
   });
+
+  it('should pass unique restriction validation when only null values exists', () => {
+    const result = schemaService.processRecords(schema, 'favorite_things', [
+      {
+        id: 'TH-ING',
+        unique_value: '',
+      },
+    ]);
+    chai.expect(result.validationErrors.length).to.eq(0);
+  });
+
+  it('should pass unique restriction validation when only one record exists', () => {
+    const result = schemaService.processRecords(schema, 'favorite_things', [
+      {
+        id: 'TH-ING',
+        unique_value: 'unique_value_1',
+      },
+    ]);
+    chai.expect(result.validationErrors.length).to.eq(0);
+  });
+
+  it('should fail unique restriction validation when duplicate values exist (scalar)', () => {
+    const result = schemaService.processRecords(schema, 'favorite_things', [
+      {
+        id: 'ID-1',
+        unique_value: 'unique_value_1',
+      },
+      {
+        id: 'ID-2',
+        unique_value: 'unique_value_1',
+      },
+    ]);
+
+    chai.expect(result.validationErrors.length).to.eq(2);
+    chai.expect(result.validationErrors[0]).to.deep.eq({
+      errorType: SchemaValidationErrorTypes.INVALID_BY_UNIQUE,
+      message:
+        'Value for unique_value must be unique.',
+      fieldName: 'unique_value',
+      index: 0,
+      info: { value: ['unique_value_1'] },
+    });
+    chai.expect(result.validationErrors[1]).to.deep.eq({
+      errorType: SchemaValidationErrorTypes.INVALID_BY_UNIQUE,
+      message:
+        'Value for unique_value must be unique.',
+      fieldName: 'unique_value',
+      index: 1,
+      info: { value: ['unique_value_1'] },
+    });
+  });
+  it('should fail unique restriction validation when duplicate values exist (array)', () => {
+    const result = schemaService.processRecords(schema, 'favorite_things', [
+      {
+        id: 'ID-1',
+        unique_value: ['unique_value_1', 'unique_value_2'],
+      },
+      {
+        id: 'ID-2',
+        unique_value: ['unique_value_1', 'unique_value_2'],
+      },
+    ]);
+
+    chai.expect(result.validationErrors.length).to.eq(2);
+    chai.expect(result.validationErrors[0]).to.deep.eq({
+      errorType: SchemaValidationErrorTypes.INVALID_BY_UNIQUE,
+      message:
+        'Value for unique_value must be unique.',
+      fieldName: 'unique_value',
+      index: 0,
+      info: { value: ['unique_value_1', 'unique_value_2'] },
+    });
+    chai.expect(result.validationErrors[1]).to.deep.eq({
+      errorType: SchemaValidationErrorTypes.INVALID_BY_UNIQUE,
+      message:
+        'Value for unique_value must be unique.',
+      fieldName: 'unique_value',
+      index: 1,
+      info: { value: ['unique_value_1', 'unique_value_2'] },
+    });
+  });
 });
+
+
 
 const records = [
   {

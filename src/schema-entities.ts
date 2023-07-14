@@ -80,6 +80,7 @@ export interface FieldDefinition {
     regex?: string;
     script?: Array<string> | string;
     required?: boolean;
+    unique?: boolean;
     range?: RangeRestriction;
   };
   isArray?: boolean;
@@ -119,6 +120,7 @@ export enum SchemaValidationErrorTypes {
   INVALID_BY_SCRIPT = 'INVALID_BY_SCRIPT',
   INVALID_ENUM_VALUE = 'INVALID_ENUM_VALUE',
   UNRECOGNIZED_FIELD = 'UNRECOGNIZED_FIELD',
+  INVALID_BY_UNIQUE= 'INVALID_BY_UNIQUE',
 }
 
 export interface SchemaValidationError {
