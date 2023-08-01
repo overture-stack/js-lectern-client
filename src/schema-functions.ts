@@ -26,6 +26,7 @@ import {
   BatchProcessingResult,
   CodeListRestriction,
   RangeRestriction,
+  SchemaData,
 } from './schema-entities';
 import vm from 'vm';
 import {
@@ -54,6 +55,7 @@ import schemaErrorMessage from './schema-error-messages';
 import { loggerFor } from './logger';
 import { DeepReadonly } from 'deep-freeze';
 import _ from 'lodash';
+import { calculateDifference } from './records-operations';
 const L = loggerFor(__filename);
 
 export const getSchemaFieldNamesWithPriority = (
@@ -77,6 +79,70 @@ export const getSchemaFieldNamesWithPriority = (
   return fieldNamesMapped;
 };
 
+const getNotNullSchemaDefinitionFromDictionary = (
+  dictionary: SchemasDictionary, schemaName: string
+): SchemaDefinition => {
+  const schemaDef: SchemaDefinition | undefined = dictionary.schemas.find(
+    e => e.name === schemaName,
+  );
+  if (!schemaDef) {
+    throw new Error(`no schema found for : ${schemaName}`);
+  }
+  return schemaDef;
+};
+
+export const processSchemas = (
+  dictionary: SchemasDictionary,
+  schemasData: Record<string, SchemaData>,
+): Record<string, BatchProcessingResult> => {
+  Checks.checkNotNull('dictionary', dictionary);
+  Checks.checkNotNull('schemasData', schemasData);
+
+  const results: Record<string, BatchProcessingResult> = {};
+
+  Object.keys(schemasData).forEach((schemaName) => {
+    // Run validations at the record level
+    const recordLevelValidationResults = processRecords(dictionary, schemaName, schemasData[schemaName]);
+
+    // Run cross-schema validations
+    const schemaDef: SchemaDefinition = getNotNullSchemaDefinitionFromDictionary(dictionary, schemaName);
+    const crossSchemaLevelValidationResults = validation
+      .runCrossSchemaValidationPipeline(schemaDef, schemasData, [
+        validation.validateForeignKey,
+      ])
+      .filter(notEmpty);
+
+    const recordLevelErrors = recordLevelValidationResults.validationErrors.map(x => {
+      return {
+        errorType: x.errorType,
+        index: x.index,
+        fieldName: x.fieldName,
+        info: x.info,
+        message: x.message
+      };
+    });
+
+    const crossSchemaLevelErrors = crossSchemaLevelValidationResults.map(x => {
+      return {
+        errorType: x.errorType,
+        index: x.index,
+        fieldName: x.fieldName,
+        info: x.info,
+        message: x.message
+      };
+    });
+
+    const allErrorsBySchema = [...recordLevelErrors, ...crossSchemaLevelErrors];
+
+    results[schemaName] = F({
+      validationErrors: allErrorsBySchema,
+      processedRecords: recordLevelValidationResults.processedRecords
+    });
+  });
+
+  return results;
+};
+
 export const processRecords = (
   dataSchema: SchemasDictionary,
   definition: string,
@@ -86,12 +152,7 @@ export const processRecords = (
   Checks.checkNotNull('dataSchema', dataSchema);
   Checks.checkNotNull('definition', definition);
 
-  const schemaDef: SchemaDefinition | undefined = dataSchema.schemas.find(
-    e => e.name === definition,
-  );
-  if (!schemaDef) {
-    throw new Error(`no schema found for : ${definition}`);
-  }
+  const schemaDef: SchemaDefinition = getNotNullSchemaDefinitionFromDictionary(dataSchema, definition);
 
   let validationErrors: SchemaValidationError[] = [];
   const processedRecords: TypedDataRecord[] = [];
@@ -289,6 +350,23 @@ const getTypedValue = (field: FieldDefinition, valueType: ValueType, rawValue: s
 };
 
 /**
+ * Creates a record Record<number, string[]> from a dataset. The index is the position of each row in the
+ * dataset and the value is an arra with the values in the row for the fields defined in `fields`.
+ * @param dataset Dataset from which to select the data.
+ * @param fields Fields to select, which will determine the value for each record.
+ * @returns Record with the format <id, [valueField1, valueField2, ... valueFiledN]>.
+ */
+const buildRecordsFromDataset = (dataset: SchemaData, fields: string[]): Record<number, string[]> => {
+  const records: Record<number, string[]> = {};
+  dataset.forEach((row, index) => {
+    const values: string[] = [];
+    fields.forEach(field => values.push(row[field].toString()));
+    records[index] = values;
+  });
+  return records;
+};
+
+/**
  * Run schema validation pipeline for a schema defintion on the list of records provided.
  * @param definition the schema definition name.
  * @param record the records to validate.
@@ -356,6 +434,11 @@ namespace validation {
     fields: Array<FieldDefinition>,
   ) => Array<SchemaValidationError>;
 
+  export type CrossSchemaValidationFunction = (
+    schemaDef: SchemaDefinition,
+    schemasData: Record<string, SchemaData>
+  ) => Array<SchemaValidationError>;
+
   export const runValidationPipeline = (
     rec: DataRecord | TypedDataRecord,
     index: number,
@@ -387,6 +470,21 @@ namespace validation {
       const typedFunc = fun as TypedDatasetValidationFunction;
       result = result.concat(
         typedFunc(dataset, getValidFields(result, fields)),
+      );
+    }
+    return result;
+  };
+
+  export const runCrossSchemaValidationPipeline = (
+    schemaDef: SchemaDefinition,
+    schemasData: Record<string, SchemaData>,
+    funs: Array<CrossSchemaValidationFunction>,
+  ) => {
+    let result: Array<SchemaValidationError> = [];
+    for (const fun of funs) {
+      const typedFunc = fun as CrossSchemaValidationFunction;
+      result = result.concat(
+        typedFunc(schemaDef, schemasData),
       );
     }
     return result;
@@ -569,6 +667,47 @@ namespace validation {
         return undefined;
       })
       .filter(notEmpty);
+  };
+
+  export const validateForeignKey: CrossSchemaValidationFunction = (
+    schemaDef: SchemaDefinition,
+    schemasData: Record<string, SchemaData>
+  ) => {
+    const errors: Array<SchemaValidationError> = [];
+    const foreignKeyDefinitions = schemaDef?.restrictions?.foreignKey;
+    if (foreignKeyDefinitions) {
+      foreignKeyDefinitions.forEach(foreignKeyDefinition => {
+        const localSchemaData = schemasData[schemaDef.name];
+        const foreignSchemaData = schemasData[foreignKeyDefinition.schema];
+
+        // A foreign key can have more than one field, in which case is a composite foreign key.
+        const localFields = foreignKeyDefinition.mappings.map(x => x.local);
+        const foreignFields = foreignKeyDefinition.mappings.map(x => x.foreign);
+
+        // Build two "sets" of <id, values> to compare. Values is the array with the values of each
+        // field in the case the fk is composite.
+        const localValues: Record<number, string[]> = buildRecordsFromDataset(localSchemaData, localFields);
+        const foreignValues: Record<number, string[]> = buildRecordsFromDataset(foreignSchemaData, foreignFields);
+
+        // This artificial record in foreignValues allows null references in localValues to be valid.
+        foreignValues[-1] = [''];
+
+        // `difference` contains records that are in the local set but not in the foreign one.
+        const difference = calculateDifference(localValues, foreignValues);
+
+        difference.forEach(record => {
+          const index = record[0];
+          const info = { value: record[1], foreignSchema: foreignKeyDefinition.schema };
+
+          errors.push(buildError(
+            SchemaValidationErrorTypes.INVALID_BY_FOREIGN_KEY,
+            localFields.join(', '),
+            index,
+            info));
+        });
+      });
+    }
+    return errors;
   };
 
   export const getValidFields = (

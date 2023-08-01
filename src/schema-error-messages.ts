@@ -27,7 +27,8 @@ const ERROR_MESSAGES: { [key: string]: (errorData: any) => string } = {
   INVALID_BY_SCRIPT: error => error.info.message,
   INVALID_ENUM_VALUE: () => INVALID_VALUE_ERROR_MESSAGE,
   MISSING_REQUIRED_FIELD: errorData => `${errorData.fieldName} is a required field.`,
-  INVALID_BY_UNIQUE: errorData => `Value for ${errorData.fieldName} must be unique.`
+  INVALID_BY_UNIQUE: errorData => `Value for ${errorData.fieldName} must be unique.`,
+  INVALID_BY_FOREIGN_KEY: errorData => getForeignKeyErrorMsg(errorData),
 };
 
 // Returns the formatted message for the given error key, taking any required properties from the info object
@@ -68,6 +69,13 @@ function getRegexErrorMsg(info: any) {
   if (info.examples) {
     msg = msg + ` Examples: ${info.examples}`;
   }
+  return msg;
+}
+
+function getForeignKeyErrorMsg(errorData: any) {
+  const valuesAsString = errorData.info.value.join(', ');
+  const detail = `Key ${valuesAsString} is not present in schema ${errorData.info.foreignSchema}`;
+  const msg = `Record violates foreign key restriction defined for field(s) ${errorData.fieldName}. ${detail}.`;
   return msg;
 }
 

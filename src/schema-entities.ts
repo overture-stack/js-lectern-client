@@ -40,6 +40,7 @@ export interface SchemasDictionary {
 export interface SchemaDefinition {
   readonly name: string;
   readonly description: string;
+  readonly restrictions: SchemaRestriction;
   readonly fields: ReadonlyArray<FieldDefinition>;
 }
 
@@ -52,6 +53,8 @@ export interface FieldDiff {
   after?: FieldDefinition;
   diff: FieldChanges;
 }
+
+export type SchemaData = ReadonlyArray<DataRecord>;
 
 // changes can be nested
 // in case of created/delete field we get Change
@@ -68,6 +71,17 @@ export enum ChangeTypeName {
 export interface Change {
   type: ChangeTypeName;
   data: any;
+}
+
+export interface SchemaRestriction {
+  foreignKey?: {
+    schema: string;
+    mappings: {
+      local: string;
+      foreign: string;
+    }[];
+  }[] | undefined;
+  uniqueKey?: string[] | undefined;
 }
 
 export interface FieldDefinition {
@@ -120,7 +134,8 @@ export enum SchemaValidationErrorTypes {
   INVALID_BY_SCRIPT = 'INVALID_BY_SCRIPT',
   INVALID_ENUM_VALUE = 'INVALID_ENUM_VALUE',
   UNRECOGNIZED_FIELD = 'UNRECOGNIZED_FIELD',
-  INVALID_BY_UNIQUE= 'INVALID_BY_UNIQUE',
+  INVALID_BY_UNIQUE = 'INVALID_BY_UNIQUE',
+  INVALID_BY_FOREIGN_KEY = 'INVALID_BY_FOREIGN_KEY',
 }
 
 export interface SchemaValidationError {

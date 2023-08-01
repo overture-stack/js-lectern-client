@@ -339,6 +339,110 @@
             "isArray": true
           }
         ]
+      },
+      {
+        "name": "parent_schema_1",
+        "description": "Parent schema 1. Used to test relational validations",
+        "fields": [
+          {
+            "name": "id",
+            "valueType": "string",
+            "description": "Id"
+          },
+          {
+            "name": "external_id",
+            "valueType": "string",
+            "description": "External Id"
+          },
+          {
+            "name": "name",
+            "valueType": "string",
+            "description": "Name"
+          }
+        ]
+      },
+      {
+        "name": "parent_schema_2",
+        "description": "Parent schema 1. Used to test relational validations",
+        "fields": [
+          {
+            "name": "id",
+            "valueType": "string",
+            "description": "Id"
+          },
+          {
+            "name": "name",
+            "valueType": "string",
+            "description": "Name"
+          }
+        ]
+      },
+      {
+        "name": "child_schema_simple_fk",
+        "description": "Child schema referencing a field in a foreign schema",
+        "restrictions": { 
+            "foreignKey":[
+                {
+                    "schema": "parent_schema_1",
+                    "mappings": [
+                        {
+                            "local": "parent_schema_1_id", 
+                            "foreign": "id"
+                        }
+                    ]
+                }
+            ]
+        },
+        "fields": [
+          {
+            "name": "id",
+            "valueType": "number",
+            "description": "Id"
+          },
+          {
+            "name": "parent_schema_1_id",
+            "valueType": "string",
+            "description": "Reference to id in schema parent_schema_1"
+          }
+        ]
+      },
+      {
+        "name": "child_schema_composite_fk",
+        "description": "Child schema referencing several fields in a foreign schema",
+        "restrictions": { 
+            "foreignKey":[
+                {
+                    "schema": "parent_schema_1",
+                    "mappings": [
+                        {
+                            "local": "parent_schema_1_id", 
+                            "foreign": "id"
+                        },
+                        {
+                          "local": "parent_schema_1_external_id", 
+                          "foreign": "external_id"
+                      }
+                    ]
+                }
+            ]
+        },
+        "fields": [
+          {
+            "name": "id",
+            "valueType": "number",
+            "description": "Id"
+          },
+          {
+            "name": "parent_schema_1_id",
+            "valueType": "string",
+            "description": "Reference to id in schema parent_schema_1"
+          },
+          {
+            "name": "parent_schema_1_external_id",
+            "valueType": "string",
+            "description": "Reference to external id in schema parent_schema_1"
+          }
+        ]
       }
     ],
     "_id": "5d250369f38d1f0d9376fd38",
