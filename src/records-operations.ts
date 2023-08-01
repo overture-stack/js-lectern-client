@@ -17,7 +17,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import _ from 'lodash';
+import { differenceWith } from 'lodash';
 
 /**
  * Calculates the difference between 2 records (similar to a set difference). Returns rows in `recordA` which are not present
@@ -28,7 +28,7 @@ import _ from 'lodash';
 export const calculateDifference = (recordA: Record<number, string[]>, recordB: Record<number, string[]>): any[][]  => {
     const arrayA = recordToArray(recordA);
     const arrayB = recordToArray(recordB);
-    return _.differenceWith(arrayA, arrayB, (a, b) => a[1].join('_') == b[1].join('_'));
+    return differenceWith(arrayA, arrayB, (a, b) => a[1].join('_') === b[1].join('_'));
   };
 
 const recordToArray = (record: Record<number, string[]>): any[] => {

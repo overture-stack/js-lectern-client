@@ -19,6 +19,13 @@
 
 import { RangeRestriction } from './schema-entities';
 
+function getForeignKeyErrorMsg(errorData: any) {
+  const valuesAsString = errorData.info.value.join(', ');
+  const detail = `Key ${valuesAsString} is not present in schema ${errorData.info.foreignSchema}`;
+  const msg = `Record violates foreign key restriction defined for field(s) ${errorData.fieldName}. ${detail}.`;
+  return msg;
+}
+
 const INVALID_VALUE_ERROR_MESSAGE = 'The value is not permissible for this field.';
 const ERROR_MESSAGES: { [key: string]: (errorData: any) => string } = {
   INVALID_FIELD_VALUE_TYPE: () => INVALID_VALUE_ERROR_MESSAGE,
@@ -69,13 +76,6 @@ function getRegexErrorMsg(info: any) {
   if (info.examples) {
     msg = msg + ` Examples: ${info.examples}`;
   }
-  return msg;
-}
-
-function getForeignKeyErrorMsg(errorData: any) {
-  const valuesAsString = errorData.info.value.join(', ');
-  const detail = `Key ${valuesAsString} is not present in schema ${errorData.info.foreignSchema}`;
-  const msg = `Record violates foreign key restriction defined for field(s) ${errorData.fieldName}. ${detail}.`;
   return msg;
 }
 
