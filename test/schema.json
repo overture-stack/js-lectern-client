@@ -366,14 +366,16 @@
         "description": "Parent schema 1. Used to test relational validations",
         "fields": [
           {
-            "name": "id",
+            "name": "id1",
             "valueType": "string",
-            "description": "Id"
+            "description": "Id 1",
+            "isArray": true
           },
           {
-            "name": "name",
+            "name": "id2",
             "valueType": "string",
-            "description": "Name"
+            "description": "Id 2",
+            "isArray": true
           }
         ]
       },
@@ -441,6 +443,46 @@
             "name": "parent_schema_1_external_id",
             "valueType": "string",
             "description": "Reference to external id in schema parent_schema_1"
+          }
+        ]
+      },
+      {
+        "name": "child_schema_composite_array_values_fk",
+        "description": "Child schema referencing several fields in a foreign schema",
+        "restrictions": { 
+            "foreignKey":[
+                {
+                    "schema": "parent_schema_2",
+                    "mappings": [
+                        {
+                            "local": "parent_schema_2_id1", 
+                            "foreign": "id1"
+                        },
+                        {
+                          "local": "parent_schema_2_id12", 
+                          "foreign": "id2"
+                      }
+                    ]
+                }
+            ]
+        },
+        "fields": [
+          {
+            "name": "id",
+            "valueType": "number",
+            "description": "Id"
+          },
+          {
+            "name": "parent_schema_2_id1",
+            "valueType": "string",
+            "description": "Reference to id1 in schema parent_schema_2",
+            "isArray": true
+          },
+          {
+            "name": "parent_schema_2_id12",
+            "valueType": "string",
+            "description": "Reference to external id2 in schema parent_schema_2",
+            "isArray": true
           }
         ]
       }

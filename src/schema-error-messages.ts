@@ -17,10 +17,19 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import { isArray } from 'lodash';
 import { RangeRestriction } from './schema-entities';
 
 function getForeignKeyErrorMsg(errorData: any) {
-  const valuesAsString = errorData.info.value.join(', ');
+  const valueEntries = Object.entries(errorData.info.value);
+  const formattedKeyValues: string[] = valueEntries.map(([key, value]) => {
+    if (isArray(value)) {
+      return `${key}: [${value.join(', ')}]`;
+    } else {
+      return `${key}: ${value}`;
+    }
+  });
+  const valuesAsString = formattedKeyValues.join(', ');
   const detail = `Key ${valuesAsString} is not present in schema ${errorData.info.foreignSchema}`;
   const msg = `Record violates foreign key restriction defined for field(s) ${errorData.fieldName}. ${detail}.`;
   return msg;

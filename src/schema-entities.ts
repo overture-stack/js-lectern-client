@@ -80,8 +80,8 @@ export interface SchemaRestriction {
       local: string;
       foreign: string;
     }[];
-  }[] | undefined;
-  uniqueKey?: string[] | undefined;
+  }[];
+  uniqueKey?: string[];
 }
 
 export interface FieldDefinition {

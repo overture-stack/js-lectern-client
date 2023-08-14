@@ -17,23 +17,36 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import { differenceWith } from 'lodash';
+import { differenceWith, isEqual } from 'lodash';
 
 /**
- * Calculates the difference between 2 records (similar to a set difference). Returns rows in `recordA` which are not present
- * in `recordB`. Two rows are equal if their values are the same.
- * @param recordA Record A. The returned value of this function is a subset of this record.
- * @param recordB Record B. Elements to be substracted from Record A.
+ * Renames properties in a record using a mapping between current and new names.
+ * @param record The record whose properties should be renamed.
+ * @param fieldsMapping A mapping of current property names to new property names.
+ * @returns A new record with the properties' names changed according to the mapping.
  */
-export const calculateDifference = (recordA: Record<number, string[]>, recordB: Record<number, string[]>): any[][]  => {
-    const arrayA = recordToArray(recordA);
-    const arrayB = recordToArray(recordB);
-    return differenceWith(arrayA, arrayB, (a, b) => a[1].join('_') === b[1].join('_'));
-  };
-
-const recordToArray = (record: Record<number, string[]>): any[] => {
-    return Object.keys(record).map(x => {
-        const idx = parseInt(x);
-        return [idx, record[idx]];
+const renameProperties = (record: Record<string, string | string[]>, fieldsMapping: Map<string, string>
+): Record<string, string | string[]> => {
+    const renamed: Record<string, string | string[]> = {};
+    Object.entries(record).forEach(([propertyName, propertyValue]) => {
+        const newName = fieldsMapping.get(propertyName) ?? propertyName;
+        renamed[newName] = propertyValue;
     });
+    return renamed;
+};
+
+/**
+ * Find missing foreign keys by calculating the difference between 2 dataset keys (similar to a set difference).
+ * Returns rows in `dataKeysA` which are not present in `dataKeysB`.
+ * @param datasetKeysA Keys of the dataset A. The returned value of this function is a subset of this array.
+ * @param datasetKeysB Keys of the dataset B. Elements to be substracted from `datasetKeysA`.
+ * @param fieldsMapping Mapping of the field names so the keys can be compared correctly.
+ */
+export const findMissingForeignKeys = (
+    datasetKeysA: [number, Record<string, string | string[]>][],
+    datasetKeysB: [number, Record<string, string | string[]>][],
+    fieldsMapping: Map<string, string>
+): [number, Record<string, string | string[]>][] => {
+    const diff = differenceWith(datasetKeysA, datasetKeysB, (a, b) => isEqual(a[1], renameProperties(b[1], fieldsMapping)));
+    return diff;
 };

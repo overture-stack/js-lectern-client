@@ -677,10 +677,10 @@ describe('schema-functions', () => {
     chai.expect(childSchemaErrors[0]).to.deep.eq({
       errorType: SchemaValidationErrorTypes.INVALID_BY_FOREIGN_KEY,
       message:
-        'Record violates foreign key restriction defined for field(s) parent_schema_1_id. Key non_existing_value_in_foreign_schema is not present in schema parent_schema_1.',
+        'Record violates foreign key restriction defined for field(s) parent_schema_1_id. Key parent_schema_1_id: non_existing_value_in_foreign_schema is not present in schema parent_schema_1.',
       fieldName: 'parent_schema_1_id',
       index: 1,
-      info: { "foreignSchema": "parent_schema_1", value: ['non_existing_value_in_foreign_schema'] },
+      info: { "foreignSchema": "parent_schema_1", value: { 'parent_schema_1_id': 'non_existing_value_in_foreign_schema' } },
     });
 
   });
@@ -718,15 +718,58 @@ describe('schema-functions', () => {
 
     const result = schemaService.processSchemas(schema, schemaData);
     const childSchemaErrors = result['child_schema_composite_fk'].validationErrors;
+    
+    chai.expect(childSchemaErrors.length).to.eq(1);
+    chai.expect(childSchemaErrors[0]).to.deep.eq({
+      errorType: SchemaValidationErrorTypes.INVALID_BY_FOREIGN_KEY,
+      message:
+        'Record violates foreign key restriction defined for field(s) parent_schema_1_id, parent_schema_1_external_id. Key parent_schema_1_id: parent_schema_1_id_2, parent_schema_1_external_id: non_existing_value_in_foreign_schema is not present in schema parent_schema_1.',
+      fieldName: 'parent_schema_1_id, parent_schema_1_external_id',
+      index: 1,
+      info: {
+        "foreignSchema": "parent_schema_1",
+        value: { 'parent_schema_1_external_id': 'non_existing_value_in_foreign_schema', 'parent_schema_1_id': 'parent_schema_1_id_2' }
+      },
+    });
+  });
+
+  it('should fail foreignKey restriction validation when values (array) do not match in foreign schema (composite fk)', () => {
+    
+    const parent_schema_2_data = [
+      {
+        id1: ['id1_1', 'id1_2'],
+        id2: ['id2_1']
+      }
+    ];
+    
+    const child_schema_composite_array_values_fk_data =  [
+      {
+        id: '1',
+        parent_schema_2_id1: ['id1_1'],
+        parent_schema_2_id12: ['id1_2', 'id2_1'],
+      }
+    ];
+    const schemaData = {
+      'parent_schema_2': parent_schema_2_data,
+      'child_schema_composite_array_values_fk': child_schema_composite_array_values_fk_data};
+
+    const result = schemaService.processSchemas(schema, schemaData);
+    const childSchemaErrors = result['child_schema_composite_array_values_fk'].validationErrors;
 
     chai.expect(childSchemaErrors.length).to.eq(1);
     chai.expect(childSchemaErrors[0]).to.deep.eq({
       errorType: SchemaValidationErrorTypes.INVALID_BY_FOREIGN_KEY,
       message:
-        'Record violates foreign key restriction defined for field(s) parent_schema_1_id, parent_schema_1_external_id. Key parent_schema_1_id_2, non_existing_value_in_foreign_schema is not present in schema parent_schema_1.',
-      fieldName: 'parent_schema_1_id, parent_schema_1_external_id',
-      index: 1,
-      info: { "foreignSchema": "parent_schema_1", value: ['parent_schema_1_id_2', 'non_existing_value_in_foreign_schema'] },
+        'Record violates foreign key restriction defined for field(s) parent_schema_2_id1, parent_schema_2_id12. Key parent_schema_2_id1: [id1_1], parent_schema_2_id12: [id1_2, id2_1] is not present in schema parent_schema_2.',
+      fieldName: 'parent_schema_2_id1, parent_schema_2_id12',
+      index: 0,
+      info: {
+        "foreignSchema": "parent_schema_2",
+        value: {
+          "parent_schema_2_id1": ['id1_1'],
+          "parent_schema_2_id12": ['id1_2', 'id2_1']
+        }
+      },
     });
   });
 

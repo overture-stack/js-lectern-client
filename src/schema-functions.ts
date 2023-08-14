@@ -54,8 +54,8 @@ import {
 import schemaErrorMessage from './schema-error-messages';
 import { loggerFor } from './logger';
 import { DeepReadonly } from 'deep-freeze';
-import _ from 'lodash';
-import { calculateDifference } from './records-operations';
+import _, { isArray } from 'lodash';
+import { findMissingForeignKeys } from './records-operations';
 const L = loggerFor(__filename);
 
 export const getSchemaFieldNamesWithPriority = (
@@ -350,18 +350,20 @@ const getTypedValue = (field: FieldDefinition, valueType: ValueType, rawValue: s
 };
 
 /**
- * Creates a record Record<number, string[]> from a dataset. The index is the position of each row in the
- * dataset and the value is an arra with the values in the row for the fields defined in `fields`.
- * @param dataset Dataset from which to select the data.
- * @param fields Fields to select, which will determine the value for each record.
- * @returns Record with the format <id, [valueField1, valueField2, ... valueFiledN]>.
+ * A "select" function that retrieves specific fields from the dataset as a record, as well as the numeric position of each row in the dataset.
+ * @param dataset Dataset to select fields from.
+ * @param fields Array with names of the fields to select.
+ * @returns A tuple array. In each tuple, the first element is the index of the row in the dataset, and the second value is the record with the
+ * selected values.
  */
-const buildRecordsFromDataset = (dataset: SchemaData, fields: string[]): Record<number, string[]> => {
-  const records: Record<number, string[]> = {};
+const selectFieldsFromDataset = (dataset: SchemaData, fields: string[]): [number, Record<string, string | string[]>][] => {
+  const records: [number, Record<string, string | string[]>][] = [];
   dataset.forEach((row, index) => {
-    const values: string[] = [];
-    fields.forEach(field => values.push(row[field].toString()));
-    records[index] = values;
+    const values: Record<string, string | string[]> = {};
+    fields.forEach(field =>  {
+      values[field] = row[field] || '';
+    });
+    records.push([index, values]);
   });
   return records;
 };
@@ -677,27 +679,34 @@ namespace validation {
     const foreignKeyDefinitions = schemaDef?.restrictions?.foreignKey;
     if (foreignKeyDefinitions) {
       foreignKeyDefinitions.forEach(foreignKeyDefinition => {
-        const localSchemaData = schemasData[schemaDef.name];
-        const foreignSchemaData = schemasData[foreignKeyDefinition.schema];
+        const localSchemaData = schemasData[schemaDef.name] || [];
+        const foreignSchemaData = schemasData[foreignKeyDefinition.schema] || [];
 
         // A foreign key can have more than one field, in which case is a composite foreign key.
         const localFields = foreignKeyDefinition.mappings.map(x => x.local);
         const foreignFields = foreignKeyDefinition.mappings.map(x => x.foreign);
 
-        // Build two "sets" of <id, values> to compare. Values is the array with the values of each
-        // field in the case the fk is composite.
-        const localValues: Record<number, string[]> = buildRecordsFromDataset(localSchemaData, localFields);
-        const foreignValues: Record<number, string[]> = buildRecordsFromDataset(foreignSchemaData, foreignFields);
+        const fieldsMappings = new Map<string, string>(
+          foreignKeyDefinition.mappings.map((x) => [x.foreign, x.local])
+        );
+
+        // Select the keys of the datasets to compare. The keys are records to support the scenario where the fk is composite.
+        const localValues: [number, Record<string, string | string[]>][] = selectFieldsFromDataset(localSchemaData, localFields);
+        const foreignValues: [number, Record<string, string | string[]>][] = selectFieldsFromDataset(foreignSchemaData, foreignFields);
 
         // This artificial record in foreignValues allows null references in localValues to be valid.
-        foreignValues[-1] = [''];
+        const emptyRow: Record<string, string | string[]> = {};
+        foreignFields.forEach(field => emptyRow[field] = '');
+        foreignValues.push([-1, emptyRow]);
 
-        // `difference` contains records that are in the local set but not in the foreign one.
-        const difference = calculateDifference(localValues, foreignValues);
+        const missingForeignKeys = findMissingForeignKeys(localValues, foreignValues, fieldsMappings);
 
-        difference.forEach(record => {
+        missingForeignKeys.forEach(record => {
           const index = record[0];
-          const info = { value: record[1], foreignSchema: foreignKeyDefinition.schema };
+          const info = {
+            value: record[1],
+            foreignSchema: foreignKeyDefinition.schema
+          };
 
           errors.push(buildError(
             SchemaValidationErrorTypes.INVALID_BY_FOREIGN_KEY,
