@@ -591,8 +591,9 @@ namespace validation {
         const unique = field.restrictions?.unique || undefined;
         if (!unique) return undefined;
         const keysToValidate = selectFieldsFromDataset(dataset as DataRecord[], [field.name]);
-        const duplicateRecords = findDuplicateKeys(keysToValidate);
-        duplicateRecords.forEach(([index, record]) => {
+        const duplicateKeys = findDuplicateKeys(keysToValidate);
+
+        duplicateKeys.forEach(([index, record]) => {
           const info = { value: record[field.name] };
           errors.push(buildError(SchemaValidationErrorTypes.INVALID_BY_UNIQUE, field.name, index, info));
         });
