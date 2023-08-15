@@ -485,6 +485,35 @@
             "isArray": true
           }
         ]
+      },
+      {
+        "name": "unique_key_schema",
+        "description": "Schema to test uniqueKey restriction",
+        "restrictions": {
+          "uniqueKey": [
+            "numeric_id_1",
+            "string_id_2",
+            "array_string_id_3"
+          ]
+        },
+        "fields": [
+          {
+            "name": "numeric_id_1",
+            "valueType": "number",
+            "description": "Id 1. Numeric value as part of a composite unique key"
+          },
+          {
+            "name": "string_id_2",
+            "valueType": "string",
+            "description": "Id 2. String value as part of a composite unique key"
+          },
+          {
+            "name": "array_string_id_3",
+            "valueType": "string",
+            "description": "Id 3. String array as part of a composite unique key",
+            "isArray": true
+          }
+        ]
       }
     ],
     "_id": "5d250369f38d1f0d9376fd38",

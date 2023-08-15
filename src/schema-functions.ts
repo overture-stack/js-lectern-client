@@ -55,7 +55,7 @@ import schemaErrorMessage from './schema-error-messages';
 import { loggerFor } from './logger';
 import { DeepReadonly } from 'deep-freeze';
 import _, { isArray } from 'lodash';
-import { findMissingForeignKeys } from './records-operations';
+import { findDuplicateKeys, findMissingForeignKeys } from './records-operations';
 const L = loggerFor(__filename);
 
 export const getSchemaFieldNamesWithPriority = (
@@ -433,7 +433,7 @@ namespace validation {
   // individual records
   export type TypedDatasetValidationFunction = (
     dataset: Array<TypedDataRecord>,
-    fields: Array<FieldDefinition>,
+    schemaDef: SchemaDefinition,
   ) => Array<SchemaValidationError>;
 
   export type CrossSchemaValidationFunction = (
@@ -464,14 +464,14 @@ namespace validation {
 
   export const runDatasetValidationPipeline = (
     dataset: Array<TypedDataRecord>,
-    fields: ReadonlyArray<FieldDefinition>,
+    schemaDef: SchemaDefinition,
     funs: Array<TypedDatasetValidationFunction>,
   ) => {
     let result: Array<SchemaValidationError> = [];
     for (const fun of funs) {
       const typedFunc = fun as TypedDatasetValidationFunction;
       result = result.concat(
-        typedFunc(dataset, getValidFields(result, fields)),
+        typedFunc(dataset, schemaDef),
       );
     }
     return result;
@@ -583,24 +583,38 @@ namespace validation {
   };
 
   export const validateUnique: TypedDatasetValidationFunction = (
-    dataset: Array<TypedDataRecord>, fields: Array<FieldDefinition>
+    dataset: Array<TypedDataRecord>, schemaDef: SchemaDefinition
   ) => {
     const errors: Array<SchemaValidationError> = [];
-    fields
+    schemaDef.fields
       .forEach(field => {
         const unique = field.restrictions?.unique || undefined;
         if (!unique) return undefined;
-        const countsPerValue = new Map<string, number>();
-        const values = dataset.map(x => convertToArray(x[field.name]).join('-'));
-        values.forEach(x => countsPerValue.set(x, (countsPerValue.get(x) || 0) + 1));
-        values.forEach((x, i) => {
-          if ((countsPerValue.get(x) || 0) > 1) {
-            const reportValue = dataset[i][field.name];
-            const info = { value: convertToArray(reportValue) };
-            errors.push(buildError(SchemaValidationErrorTypes.INVALID_BY_UNIQUE, field.name, i, info));
-          }
+        const keysToValidate = selectFieldsFromDataset(dataset as DataRecord[], [field.name]);
+        const duplicateRecords = findDuplicateKeys(keysToValidate);
+        duplicateRecords.forEach(([index, record]) => {
+          const info = { value: record[field.name] };
+          errors.push(buildError(SchemaValidationErrorTypes.INVALID_BY_UNIQUE, field.name, index, info));
         });
       });
+    return errors;
+  };
+
+  export const validateUniqueKey: TypedDatasetValidationFunction = (
+    dataset: Array<TypedDataRecord>, schemaDef: SchemaDefinition
+  ) => {
+    const errors: Array<SchemaValidationError> = [];
+    const uniqueKeyRestriction = schemaDef?.restrictions?.uniqueKey;
+    if (uniqueKeyRestriction) {
+      const uniqueKeyFields: string[] = uniqueKeyRestriction;
+      const keysToValidate = selectFieldsFromDataset(dataset as SchemaData, uniqueKeyFields);
+      const duplicateKeys = findDuplicateKeys(keysToValidate);
+
+      duplicateKeys.forEach(([index, record]) => {
+        const info = { value: record, uniqueKeyFields: uniqueKeyFields };
+        errors.push(buildError(SchemaValidationErrorTypes.INVALID_BY_UNIQUE_KEY, uniqueKeyFields.join(', '), index, info));
+      });
+    }
     return errors;
   };
 
@@ -855,8 +869,9 @@ namespace validation {
 }
 function validateRecordsSet(schemaDef: SchemaDefinition, processedRecords: TypedDataRecord[]) {
   const validationErrors = validation
-    .runDatasetValidationPipeline(processedRecords, schemaDef.fields, [
-      validation.validateUnique
+    .runDatasetValidationPipeline(processedRecords, schemaDef, [
+      validation.validateUnique,
+      validation.validateUniqueKey
     ])
     .filter(notEmpty);
   return validationErrors;

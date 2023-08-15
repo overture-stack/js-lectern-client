@@ -35,6 +35,21 @@ function getForeignKeyErrorMsg(errorData: any) {
   return msg;
 }
 
+function getUniqueKeyErrorMsg(errorData: any) {
+  const uniqueKeyFields: string[] = errorData.info.uniqueKeyFields;
+  const formattedKeyValues: string[] = uniqueKeyFields.map(fieldName => {
+    const value = errorData.info.value[fieldName];
+    if (isArray(value)) {
+      return `${fieldName}: [${value.join(', ')}]`;
+    } else {
+      return `${fieldName}: ${value === '' ? 'null' : value}`;
+    }
+  });
+  const valuesAsString = formattedKeyValues.join(', ');
+  const msg = `Key ${valuesAsString} must be unique.`;
+  return msg;
+}
+
 const INVALID_VALUE_ERROR_MESSAGE = 'The value is not permissible for this field.';
 const ERROR_MESSAGES: { [key: string]: (errorData: any) => string } = {
   INVALID_FIELD_VALUE_TYPE: () => INVALID_VALUE_ERROR_MESSAGE,
@@ -45,6 +60,7 @@ const ERROR_MESSAGES: { [key: string]: (errorData: any) => string } = {
   MISSING_REQUIRED_FIELD: errorData => `${errorData.fieldName} is a required field.`,
   INVALID_BY_UNIQUE: errorData => `Value for ${errorData.fieldName} must be unique.`,
   INVALID_BY_FOREIGN_KEY: errorData => getForeignKeyErrorMsg(errorData),
+  INVALID_BY_UNIQUE_KEY: errorData => getUniqueKeyErrorMsg(errorData),
 };
 
 // Returns the formatted message for the given error key, taking any required properties from the info object

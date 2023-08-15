@@ -490,7 +490,7 @@ describe('schema-functions', () => {
         unique_value: 'unique_value_1',
       },
     ]);
-
+    
     chai.expect(result.validationErrors.length).to.eq(2);
     chai.expect(result.validationErrors[0]).to.deep.eq({
       errorType: SchemaValidationErrorTypes.INVALID_BY_UNIQUE,
@@ -768,6 +768,153 @@ describe('schema-functions', () => {
         value: {
           "parent_schema_2_id1": ['id1_1'],
           "parent_schema_2_id12": ['id1_2', 'id2_1']
+        }
+      },
+    });
+  });
+
+  it('should pass uniqueKey restriction validation when only a record exists', () => {
+
+    const result = schemaService.processRecords(schema, 'unique_key_schema', [
+      {
+        numeric_id_1: '1',
+        string_id_2: 'string_value',
+        array_string_id_3: ['array_element_1', 'array_element_2']
+      }
+    ]);
+    
+    chai.expect(result.validationErrors.length).to.eq(0);
+  });
+
+  it('should pass uniqueKey restriction validation when values are unique', () => {
+
+    const result = schemaService.processRecords(schema, 'unique_key_schema', [
+      {
+        numeric_id_1: '1',
+        string_id_2: 'string_value',
+        array_string_id_3: ['array_element_1', 'array_element_2']
+      },
+      {
+        numeric_id_1: '1',
+        string_id_2: 'string_value',
+        array_string_id_3: ['array_element_1', 'array_element_x']
+      }
+    ]);
+    
+    chai.expect(result.validationErrors.length).to.eq(0);
+  });
+
+  it('should fail uniqueKey restriction validation when missing values are part of the key and they are not unique', () => {
+
+    const result = schemaService.processRecords(schema, 'unique_key_schema', [
+      {
+        numeric_id_1: '',
+        string_id_2: '',
+        array_string_id_3: []
+      },
+      {
+        numeric_id_1: '',
+        string_id_2: '',
+        array_string_id_3: []
+      }
+    ]);
+
+    chai.expect(result.validationErrors.length).to.eq(2);
+    chai.expect(result.validationErrors[0]).to.deep.eq({
+      errorType: SchemaValidationErrorTypes.INVALID_BY_UNIQUE_KEY,
+      message:
+        'Key numeric_id_1: null, string_id_2: null, array_string_id_3: null must be unique.',
+      fieldName: 'numeric_id_1, string_id_2, array_string_id_3',
+      index: 0,
+      info: {
+        uniqueKeyFields: [
+          'numeric_id_1',
+          'string_id_2',
+          'array_string_id_3'
+        ],
+        value:
+        {
+          numeric_id_1: '',
+          string_id_2: '',
+          array_string_id_3: ''
+        }
+      },
+    });
+    chai.expect(result.validationErrors[1]).to.deep.eq({
+      errorType: SchemaValidationErrorTypes.INVALID_BY_UNIQUE_KEY,
+      message:
+        'Key numeric_id_1: null, string_id_2: null, array_string_id_3: null must be unique.',
+      fieldName: 'numeric_id_1, string_id_2, array_string_id_3',
+      index: 1,
+      info: {
+        uniqueKeyFields: [
+          'numeric_id_1',
+          'string_id_2',
+          'array_string_id_3'
+        ],
+        value:
+        {
+          numeric_id_1: '',
+          string_id_2: '',
+          array_string_id_3: ''
+        }
+      },
+    });
+  });
+
+  it('should fail uniqueKey restriction validation when values are not unique', () => {
+
+    const result = schemaService.processRecords(schema, 'unique_key_schema', [
+      {
+        numeric_id_1: '1',
+        string_id_2: 'string_value',
+        array_string_id_3: ['array_element_1', 'array_element_2']
+      },
+      {
+        numeric_id_1: '1',
+        string_id_2: 'string_value',
+        array_string_id_3: ['array_element_1', 'array_element_2']
+      }
+    ]);
+
+    chai.expect(result.validationErrors.length).to.eq(2);
+    chai.expect(result.validationErrors[0]).to.deep.eq({
+      errorType: SchemaValidationErrorTypes.INVALID_BY_UNIQUE_KEY,
+      message:
+        'Key numeric_id_1: 1, string_id_2: string_value, array_string_id_3: [array_element_1, array_element_2] must be unique.',
+      fieldName: 'numeric_id_1, string_id_2, array_string_id_3',
+      index: 0,
+      info: {
+        uniqueKeyFields: [
+          'numeric_id_1',
+          'string_id_2',
+          'array_string_id_3'
+        ],
+        value:
+        {
+          numeric_id_1: 1,
+          string_id_2: 'string_value',
+          array_string_id_3: ['array_element_1', 'array_element_2']
+        }
+      },
+    });
+    chai.expect(result.validationErrors[1]).to.deep.eq({
+      errorType: SchemaValidationErrorTypes.INVALID_BY_UNIQUE_KEY,
+      message:
+        'Key numeric_id_1: 1, string_id_2: string_value, array_string_id_3: [array_element_1, array_element_2] must be unique.',
+      fieldName: 'numeric_id_1, string_id_2, array_string_id_3',
+      index: 1,
+      info: {
+        uniqueKeyFields: [
+          'numeric_id_1',
+          'string_id_2',
+          'array_string_id_3'
+        ],
+        value:
+        {
+          numeric_id_1: 1,
+          string_id_2: 'string_value',
+          array_string_id_3: ['array_element_1', 'array_element_2']
         }
       },
     });

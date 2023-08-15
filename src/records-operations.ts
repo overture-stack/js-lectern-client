@@ -50,3 +50,20 @@ export const findMissingForeignKeys = (
     const diff = differenceWith(datasetKeysA, datasetKeysB, (a, b) => isEqual(a[1], renameProperties(b[1], fieldsMapping)));
     return diff;
 };
+
+/**
+ * Find duplicate keys in a dataset.
+ * @param datasetKeys Array with the keys to evaluate.
+ * @returns An Array with all the values that appear more than once in the dataset.
+ */
+export const findDuplicateKeys = (datasetKeys: [number, Record<string, string | string[]>][]
+): [number, Record<string, string | string[]>][] => {
+    const duplicateKeys: [number, Record<string, string | string[]>][] = [];
+    datasetKeys.forEach(([key, value]) => {
+        const count = datasetKeys.filter(e => isEqual(e[1], value)).length;
+        if (count > 1) {
+            duplicateKeys.push([key, value]);
+        }
+    });
+    return duplicateKeys;
+};
