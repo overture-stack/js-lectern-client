@@ -36,6 +36,22 @@ const renameProperties = (record: Record<string, string | string[]>, fieldsMappi
 };
 
 /**
+ * Returns a string representation of a record. The record is sorted by its properties so
+ * 2 records which have the same properties and values (even if in different order) will produce the
+ * same string with this function.
+ * @param record Record to be processed.
+ * @returns String representation of the record sorted by its properties.
+ */
+const getSortedRecordKey = (record: Record<string, string | string[]>): string => {
+    const sortedKeys = Object.keys(record).sort();
+    const sortedRecord: Record<string, string | string[]> = {};
+    for (const key of sortedKeys) {
+        sortedRecord[key] = record[key];
+    }
+    return JSON.stringify(sortedRecord);
+};
+
+/**
  * Find missing foreign keys by calculating the difference between 2 dataset keys (similar to a set difference).
  * Returns rows in `dataKeysA` which are not present in `dataKeysB`.
  * @param datasetKeysA Keys of the dataset A. The returned value of this function is a subset of this array.
@@ -59,10 +75,23 @@ export const findMissingForeignKeys = (
 export const findDuplicateKeys = (datasetKeys: [number, Record<string, string | string[]>][]
 ): [number, Record<string, string | string[]>][] => {
     const duplicateKeys: [number, Record<string, string | string[]>][] = [];
-    datasetKeys.forEach(([key, value]) => {
-        const count = datasetKeys.filter(e => isEqual(e[1], value)).length;
+    const recordKeysMap: Map<[number, Record<string, string | string[]>], string> = new Map();
+    const keyCount: Map<string, number> = new Map();
+
+    // Calculate a key per record, which is a string representation that allows to compare records even if their properties
+    // are in different order
+    datasetKeys.forEach(row => {
+        const recordKey = getSortedRecordKey(row[1]);
+        const count = keyCount.get(recordKey) || 0;
+        keyCount.set(recordKey, count + 1);
+        recordKeysMap.set(row, recordKey);
+    });
+
+    // Find duplicates by checking the count of they key on each record
+    recordKeysMap.forEach((value, key) => {
+        const count = keyCount.get(value) ?? 0;
         if (count > 1) {
-            duplicateKeys.push([key, value]);
+            duplicateKeys.push(key);
         }
     });
     return duplicateKeys;
