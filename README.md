@@ -1,9 +1,10 @@
+> **Deprecation Notice**
+> 
+> This version of the Lectern client is considered deprecated. The officially supported version has been moved to [@overture-stack/lectern-client](https://www.npmjs.com/package/@overture-stack/lectern-client) alongside the other [Overture.bio](https://www.overture.bio/) software packages.
+> 
+> The Lectern client codebase has also been moved. To find the latest version of this tool please go to [github.com/@overture-stack/lectern](https://github.com/overture-stack/lectern).
+
 # JS Lectern Client 
-
-## Deprecation Notice
-This version of the Lectern client is considered deprecated. The officially supported version has been moved to [@overture-stack/lectern-client](https://www.npmjs.com/package/@overture-stack/lectern-client) alongside the other [Overture.bio](https://www.overture.bio/) software packages.
-
-The Lectern Client codebase has also been moved. To find the latest version of this tool please go to [github.com/@overture-stack/lectern](https://github.com/overture-stack/lectern).
 
 ## Features:
 - Runs different restrictions validations: regex, range, scripts, required fields, type checks, etc.
